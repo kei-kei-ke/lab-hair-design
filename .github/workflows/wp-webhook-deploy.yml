@@ -1,10 +1,18 @@
 name: Build and Deploy (WordPress Webhook)
 
 on:
+  push:
+    branches:
+      - main
   repository_dispatch:
     types:
       - wp_content_updated
   workflow_dispatch:
+
+env:
+  PUBLIC_SITE_URL: https://lab-hair-design.com
+  WORDPRESS_BASE_URL: https://lab-hair-design.com
+  PUBLIC_WORDPRESS_BASE_URL: https://lab-hair-design.com
 
 concurrency:
   group: production-deploy
@@ -13,6 +21,8 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,6 +40,9 @@ jobs:
         run: npm run build
 
       - name: Deploy dist via FTP
+        if: >-
+          github.event_name != 'push' ||
+          (secrets.CONOHA_FTP_HOST != '' && secrets.CONOHA_FTP_USERNAME != '' && secrets.CONOHA_FTP_PASSWORD != '' && secrets.CONOHA_FTP_PORT != '' && secrets.CONOHA_FTP_REMOTE_DIR != '')
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.CONOHA_FTP_HOST }}
