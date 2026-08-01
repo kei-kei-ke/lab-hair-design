@@ -1,0 +1,323 @@
+---
+type GalleryItem = {
+  slug?: string;
+  title?: string;
+  image: string;
+};
+
+type LinkMode = 'hair-detail' | 'image';
+
+interface Props {
+  title: string;
+  ariaLabel: string;
+  pagePath: string;
+  items: GalleryItem[];
+  linkMode: LinkMode;
+}
+
+const { title, ariaLabel, pagePath, items, linkMode } = Astro.props;
+
+// Finalized gallery spec: keep these values unchanged unless the owner explicitly requests a redesign.
+const GALLERY_PAGE_SIZE = 9;
+const GALLERY_COLUMN_COUNT = 3;
+const GALLERY_COLUMN_GAP_PX = 24;
+const GALLERY_GRID_MAX_WIDTH_PX = 708;
+
+const initialItems = items.slice(0, GALLERY_PAGE_SIZE);
+
+const dataId = `${title.toLowerCase()}-gallery-data`;
+const rootId = `${title.toLowerCase()}-gallery-root`;
+---
+
+<section
+  class="hair-listing"
+  id={rootId}
+  aria-labelledby={`${rootId}-title`}
+  style={`--gallery-column-count:${GALLERY_COLUMN_COUNT};--gallery-column-gap:${GALLERY_COLUMN_GAP_PX}px;--gallery-grid-max-width:${GALLERY_GRID_MAX_WIDTH_PX}px;`}
+>
+  <header class="hair-listing__head">
+    <h1 id={`${rootId}-title`} class="hair-listing__title">{title}</h1>
+  </header>
+
+  <div class="hair-listing__grid" aria-label={ariaLabel}>
+    {initialItems.map((item, index) => (
+      <article class="hair-listing__item">
+        <a
+          href={linkMode === 'hair-detail' ? `/hair/${item.slug ?? ''}` : item.image}
+          class="hair-listing__link"
+          aria-label={
+            linkMode === 'hair-detail'
+              ? `Open hair style ${item.title ?? `Hair style ${index + 1}`}`
+              : `Open photo ${item.title ?? `Photo ${index + 1}`}`
+          }
+          target={linkMode === 'image' ? '_blank' : undefined}
+          rel={linkMode === 'image' ? 'noopener noreferrer' : undefined}
+        >
+          <img
+            src={item.image}
+            alt={
+              linkMode === 'hair-detail'
+                ? item.title
+                  ? `${item.title} hair style`
+                  : `Hair style ${index + 1}`
+                : item.title
+                  ? `${item.title} photo`
+                  : `Photo ${index + 1}`
+            }
+            loading="lazy"
+            decoding="async"
+          />
+        </a>
+      </article>
+    ))}
+  </div>
+
+  <nav class="hair-listing__pagination" aria-label={`${title} gallery pagination`}></nav>
+</section>
+
+<script id={dataId} type="application/json" set:html={JSON.stringify(items)}></script>
+
+<script define:vars={{ rootId, dataId, pagePath, linkMode, GALLERY_PAGE_SIZE }}>
+  const root = document.getElementById(rootId);
+  const dataNode = document.getElementById(dataId);
+  if (!root || !dataNode) {
+    // noop
+  } else {
+    const grid = root.querySelector('.hair-listing__grid');
+    const pagination = root.querySelector('.hair-listing__pagination');
+    const pageSize = GALLERY_PAGE_SIZE;
+    // If random ordering is added in the future, shuffle only this item array order before paging.
+    // Do not alter column count, item size rules, or masonry CSS behavior.
+    const allItems = JSON.parse(dataNode.textContent || '[]');
+
+    const toPageItems = (items, currentPage) => {
+      const start = (currentPage - 1) * pageSize;
+      return items.slice(start, start + pageSize);
+    };
+
+    const getOrderKey = (item) => `${String(item.slug || '').trim()}::${String(item.image || '').trim()}`;
+
+    const shuffleItemsOncePerSession = (items) => {
+      const cloned = Array.isArray(items) ? [...items] : [];
+      if (cloned.length <= 1) return cloned;
+
+      const storageKey = `${rootId}:gallery-random-order`;
+      const currentKeys = cloned.map((item) => getOrderKey(item));
+
+      try {
+        const storedRaw = sessionStorage.getItem(storageKey);
+        if (storedRaw) {
+          const storedKeys = JSON.parse(storedRaw);
+          if (Array.isArray(storedKeys) && storedKeys.length === currentKeys.length) {
+            const keyToItem = new Map(currentKeys.map((key, index) => [key, cloned[index]]));
+            const restored = storedKeys.map((key) => keyToItem.get(String(key))).filter(Boolean);
+            if (restored.length === cloned.length) {
+              return restored;
+            }
+          }
+        }
+      } catch {
+        // Continue to a fresh shuffle when storage is unavailable or invalid.
+      }
+
+      for (let i = cloned.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
+      }
+
+      try {
+        const shuffledKeys = cloned.map((item) => getOrderKey(item));
+        sessionStorage.setItem(storageKey, JSON.stringify(shuffledKeys));
+      } catch {
+        // noop
+      }
+
+      return cloned;
+    };
+
+    const createCard = (item, index) => {
+      const article = document.createElement('article');
+      article.className = 'hair-listing__item';
+
+      const link = document.createElement('a');
+      link.className = 'hair-listing__link';
+
+      if (linkMode === 'hair-detail') {
+        link.href = `/hair/${item.slug || ''}`;
+        link.setAttribute('aria-label', `Open hair style ${item.title || `Hair style ${index + 1}`}`);
+      } else {
+        link.href = item.image;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.setAttribute('aria-label', `Open photo ${item.title || `Photo ${index + 1}`}`);
+      }
+
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt =
+        linkMode === 'hair-detail'
+          ? item.title
+            ? `${item.title} hair style`
+            : `Hair style ${index + 1}`
+          : item.title
+            ? `${item.title} photo`
+            : `Photo ${index + 1}`;
+      img.loading = 'lazy';
+      img.decoding = 'async';
+
+      link.appendChild(img);
+      article.appendChild(link);
+      return article;
+    };
+
+    const renderPagination = (currentPage, totalPages) => {
+      pagination.innerHTML = '';
+      if (totalPages <= 0) return;
+
+      const createLink = (label, page, isCurrent = false) => {
+        const a = document.createElement('a');
+        a.className = 'hair-listing__page-link';
+        if (isCurrent) a.classList.add('is-current');
+        a.href = `${pagePath}?page=${page}`;
+        a.textContent = label;
+        if (isCurrent) a.setAttribute('aria-current', 'page');
+        return a;
+      };
+
+      if (currentPage > 1) {
+        pagination.appendChild(createLink('PREV', currentPage - 1));
+      }
+
+      for (let page = 1; page <= totalPages; page += 1) {
+        pagination.appendChild(createLink(String(page), page, page === currentPage));
+      }
+
+      if (currentPage < totalPages) {
+        pagination.appendChild(createLink('NEXT', currentPage + 1));
+      }
+    };
+
+    const renderPage = () => {
+      if (!grid || !pagination) return;
+
+      const orderedItems = shuffleItemsOncePerSession(allItems);
+      const totalPages = Math.max(1, Math.ceil(orderedItems.length / pageSize));
+      const rawPage = Number.parseInt(new URL(window.location.href).searchParams.get('page') || '1', 10);
+      const currentPage = Number.isFinite(rawPage)
+        ? Math.min(Math.max(rawPage, 1), totalPages)
+        : 1;
+
+      const pagedItems = toPageItems(orderedItems, currentPage);
+
+      grid.innerHTML = '';
+      pagedItems.forEach((item, index) => {
+        grid.appendChild(createCard(item, index));
+      });
+
+      renderPagination(currentPage, totalPages);
+    };
+
+    renderPage();
+  }
+</script>
+
+<style is:global>
+  .hair-listing {
+    display: grid;
+    gap: clamp(1.8rem, 3.2vw, 2.8rem);
+    padding-top: clamp(1.2rem, 3.2vw, 2.4rem);
+    padding-inline: clamp(1.2rem, 6vw, 6rem);
+    max-width: 960px;
+    margin: 0 auto;
+    background: #fff;
+  }
+
+  .hair-listing__head {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .hair-listing__title {
+    margin: 0;
+    font-size: clamp(0.86rem, 1.35vw, 1.02rem);
+    line-height: 1.35;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 320;
+    color: rgba(17, 17, 17, 0.9);
+  }
+
+  .hair-listing__grid {
+    column-count: 3;
+    column-gap: 24px;
+    max-width: 708px;
+    /* Fixed masonry baseline (3 columns + fixed gap + fixed max width). */
+    column-count: var(--gallery-column-count, 3);
+    column-gap: var(--gallery-column-gap, 24px);
+    max-width: var(--gallery-grid-max-width, 708px);
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .hair-listing__item {
+    break-inside: avoid;
+    margin: 0 0 24px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .hair-listing__link {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    background: #f7f7f7;
+  }
+
+  .hair-listing__link img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    transition: transform 220ms ease, opacity 220ms ease;
+  }
+
+  .hair-listing__link:hover img {
+    transform: scale(1.018);
+    opacity: 0.96;
+  }
+
+  .hair-listing__pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+  }
+
+  .hair-listing__page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.5rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(17, 17, 17, 0.74);
+    text-decoration: none;
+    border: 1px solid rgba(17, 17, 17, 0.14);
+    transition: border-color 180ms ease, color 180ms ease;
+  }
+
+  .hair-listing__page-link:hover {
+    border-color: rgba(17, 17, 17, 0.34);
+    color: rgba(17, 17, 17, 0.92);
+  }
+
+  .hair-listing__page-link.is-current {
+    border-color: rgba(17, 17, 17, 0.46);
+    color: rgba(17, 17, 17, 0.94);
+  }
+</style>

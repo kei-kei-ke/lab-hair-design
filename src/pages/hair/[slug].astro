@@ -1,0 +1,131 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { fetchGalleryFeed } from '../../lib/content-api';
+
+const toPlainText = (value: unknown) => String(value ?? '').replace(/<[^>]*>/g, '').trim();
+
+const formatDate = (value: unknown) => {
+  const date = new Date(String(value ?? ''));
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+};
+
+export async function getStaticPaths() {
+  const feed = await fetchGalleryFeed();
+  const hairItems = Array.isArray(feed.hair) ? feed.hair : [];
+
+  if (!hairItems.length) {
+    return [{ params: { slug: 'hair-style' } }];
+  }
+
+  return hairItems
+    .map((item) => String(item.slug || '').trim())
+    .filter((slug) => slug !== '')
+    .map((slug) => ({ params: { slug } }));
+}
+
+const slug = String(Astro.params.slug ?? '').trim();
+const feed = await fetchGalleryFeed();
+const hairItems = Array.isArray(feed.hair) ? feed.hair : [];
+const post = hairItems.find((item) => String(item.slug || '').trim() === slug) ?? null;
+
+const title = toPlainText(post?.title || 'HAIR') || 'HAIR';
+const dateLabel = formatDate(post?.date);
+const bodyText = toPlainText(post?.caption || '');
+const bodyLines = bodyText
+  ? bodyText.split('\n').map((line) => line.trim()).filter(Boolean)
+  : [];
+const image = String(post?.image || '').trim();
+---
+<BaseLayout pageTitle={`${title} | HAIR`} pageDescription={bodyText.slice(0, 120) || title}>
+  <article class="hair-detail" aria-labelledby="hair-detail-title">
+    <header class="hair-detail__head">
+      <h1 id="hair-detail-title" class="hair-detail__title">{title}</h1>
+      {dateLabel ? <p class="hair-detail__date">{dateLabel}</p> : null}
+    </header>
+
+    {image ? (
+      <figure class="hair-detail__image-wrap">
+        <img src={image} alt={title} loading="eager" decoding="async" />
+      </figure>
+    ) : null}
+
+    {bodyLines.length ? (
+      <section class="hair-detail__body" aria-label="Hair detail body">
+        {bodyLines.map((line) => (
+          <p>{line}</p>
+        ))}
+      </section>
+    ) : null}
+  </article>
+
+  <style>
+    .hair-detail {
+      display: grid;
+      gap: clamp(1.5rem, 3.8vw, 3rem);
+      padding-top: clamp(1.1rem, 3vw, 2.4rem);
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding-inline: clamp(1rem, 6vw, 5rem);
+      background: #fff;
+      color: rgba(17, 17, 17, 0.86);
+    }
+
+    .hair-detail__head {
+      display: grid;
+      gap: 0.48rem;
+    }
+
+    .hair-detail__title {
+      margin: 0;
+      font-size: clamp(0.86rem, 1.35vw, 1.02rem);
+      line-height: 1.45;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 320;
+      color: rgba(17, 17, 17, 0.9);
+    }
+
+    .hair-detail__date {
+      margin: 0;
+      font-size: clamp(0.58rem, 0.85vw, 0.66rem);
+      line-height: 1.6;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: rgba(17, 17, 17, 0.52);
+    }
+
+    .hair-detail__image-wrap {
+      margin: 0;
+      width: 100%;
+    }
+
+    .hair-detail__image-wrap img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      background: #f7f7f7;
+      max-height: min(78svh, 920px);
+    }
+
+    .hair-detail__body {
+      display: grid;
+      gap: 0.74rem;
+      max-width: 56ch;
+      padding-bottom: 0.6rem;
+    }
+
+    .hair-detail__body p {
+      margin: 0;
+      font-size: clamp(0.72rem, 1.04vw, 0.84rem);
+      line-height: 1.9;
+      letter-spacing: 0.05em;
+      color: rgba(17, 17, 17, 0.75);
+    }
+  </style>
+</BaseLayout>

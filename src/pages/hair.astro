@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GalleryGrid from '../components/GalleryGrid.astro';
+import { fetchHairItems } from '../lib/content-api';
+
+const hairItems = await fetchHairItems();
+---
+
+<BaseLayout pageTitle="HAIR | Lab hair design" pageDescription="Lab Hair Design HAIR gallery">
+  <GalleryGrid title="HAIR" ariaLabel="Hair gallery listing" pagePath="/hair" items={hairItems} linkMode="hair-detail" />
+</BaseLayout>

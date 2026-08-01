@@ -1,0 +1,124 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { fetchAccessContent } from '../lib/content-api';
+
+const accessContent = await fetchAccessContent();
+const mapQuery = encodeURIComponent(accessContent.mapQuery || accessContent.address);
+const mapHref = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+const mapEmbed = `https://maps.google.com/maps?q=${mapQuery}&z=16&output=embed`;
+---
+<BaseLayout pageTitle="Access | Lab hair design" pageDescription="Lab Hair Design のアクセスページ">
+  <section class="section access-minimal">
+    <div class="access-minimal__inner">
+      <article class="access-minimal__item">
+        <p class="access-minimal__label">住所</p>
+        <p class="access-minimal__text">{accessContent.address}</p>
+      </article>
+      <article class="access-minimal__item">
+        <p class="access-minimal__label">アクセス</p>
+        <p class="access-minimal__text">{accessContent.guide}</p>
+      </article>
+      <article class="access-minimal__item">
+        <p class="access-minimal__label">営業時間</p>
+        <p class="access-minimal__text">{accessContent.hours}</p>
+      </article>
+      <article class="access-minimal__item">
+        <p class="access-minimal__label">定休日</p>
+        <p class="access-minimal__text">{accessContent.closed}</p>
+      </article>
+      <article class="access-minimal__item">
+        <p class="access-minimal__label">電話番号</p>
+        <a class="access-minimal__tel" href={`tel:${accessContent.tel.replace(/[^\d+]/g, '')}`} aria-label="電話をかける">{accessContent.tel}</a>
+      </article>
+      <div class="access-minimal__map-embed">
+        <iframe
+          title="Lab hair design map"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          src={mapEmbed}
+        ></iframe>
+      </div>
+      <a
+        class="access-minimal__map"
+        href={mapHref}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Google Maps
+      </a>
+    </div>
+  </section>
+
+  <style>
+    .access-minimal {
+      display: grid;
+      place-items: center;
+      padding-top: 4.5rem;
+    }
+
+    .access-minimal__inner {
+      width: min(540px, 100%);
+      display: grid;
+      gap: 1rem;
+    }
+
+    .access-minimal__item {
+      padding: 0.95rem 0;
+      border-bottom: 1px solid rgba(17, 17, 17, 0.08);
+    }
+
+    .access-minimal__label {
+      margin: 0;
+      font-size: 0.64rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.72;
+    }
+
+    .access-minimal__text {
+      margin: 0.35rem 0 0;
+      font-size: 0.78rem;
+      line-height: 1.8;
+    }
+
+    .access-minimal__tel {
+      display: inline-flex;
+      margin: 0.35rem 0 0;
+      font-size: 0.78rem;
+      line-height: 1.8;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(17, 17, 17, 0.18);
+      padding-bottom: 0.06rem;
+      width: fit-content;
+      opacity: 0.9;
+    }
+
+    .access-minimal__map-embed {
+      width: min(540px, 100%);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #f3f0e8;
+      border: 1px solid rgba(17, 17, 17, 0.08);
+    }
+
+    .access-minimal__map-embed iframe {
+      width: 100%;
+      height: 270px;
+      border: 0;
+      display: block;
+    }
+
+    .access-minimal__map {
+      display: inline-flex;
+      justify-self: start;
+      margin-top: 0.2rem;
+      font-size: 0.66rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(17, 17, 17, 0.22);
+      padding-bottom: 0.15rem;
+      opacity: 0.85;
+    }
+  </style>
+</BaseLayout>

@@ -1,0 +1,212 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { fetchAccessContent, fetchHomeFeed } from '../lib/content-api';
+
+const homeFeed = await fetchHomeFeed();
+const access = await fetchAccessContent();
+
+const salonImages = homeFeed.salonInstagramImages.filter(Boolean);
+const heroImage = salonImages[0] ?? '/images/main.jpg';
+const spaceImages = (salonImages.length ? salonImages.slice(1, 5) : ['/images/main.jpg']).slice(0, 4);
+
+const telDigits = access.tel.replace(/[^\d+]/g, '');
+const telHref = telDigits ? `tel:${telDigits}` : '#';
+const instagramUrl = homeFeed.salonInstagramUrl;
+const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(access.mapQuery)}`;
+---
+<BaseLayout pageTitle="Salon | Lab hair design" pageDescription="Lab Hair Design SALON">
+  <article class="salon-page">
+    <section class="salon-hero" aria-labelledby="salon-title">
+      <img
+        class="salon-hero__image"
+        src={heroImage}
+        alt="Lab Hair Design salon exterior"
+        loading="eager"
+        decoding="async"
+      />
+      <h1 id="salon-title" class="salon-hero__title">SALON</h1>
+    </section>
+
+    <section class="salon-about" aria-labelledby="salon-about-title">
+      <h2 id="salon-about-title" class="salon-heading">About</h2>
+      <p class="salon-about__text">
+        Quiet textures, natural light, and deliberate craft. A space where hair design and daily atmosphere stay
+        softly connected.
+      </p>
+    </section>
+
+    <section class="salon-space" aria-labelledby="salon-space-title">
+      <h2 id="salon-space-title" class="salon-heading">Salon Space</h2>
+      <div class="salon-space__grid">
+        {spaceImages.map((image, index) => (
+          <figure class="salon-space__item">
+            <img
+              src={image}
+              alt={`Salon interior view ${index + 1}`}
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
+        ))}
+      </div>
+    </section>
+
+    <section class="salon-details" aria-labelledby="salon-details-title">
+      <h2 id="salon-details-title" class="salon-heading">Details</h2>
+      <dl class="salon-details__list">
+        <div class="salon-details__row">
+          <dt>Hours</dt>
+          <dd>{access.hours}</dd>
+        </div>
+        <div class="salon-details__row">
+          <dt>Address</dt>
+          <dd>{access.address}</dd>
+        </div>
+        <div class="salon-details__row">
+          <dt>Tel</dt>
+          <dd><a href={telHref}>{access.tel}</a></dd>
+        </div>
+        <div class="salon-details__row">
+          <dt>Instagram</dt>
+          <dd><a href={instagramUrl} target="_blank" rel="noopener noreferrer">@lab.hair.design</a></dd>
+        </div>
+        <div class="salon-details__row">
+          <dt>Map</dt>
+          <dd><a href={mapUrl} target="_blank" rel="noopener noreferrer">Google Maps</a></dd>
+        </div>
+      </dl>
+    </section>
+  </article>
+
+  <style>
+    .salon-page {
+      background: #fff;
+      color: #151515;
+      display: grid;
+      gap: clamp(3.8rem, 8vw, 8.2rem);
+      padding-top: clamp(1.2rem, 3.8vw, 2.6rem);
+    }
+
+    .salon-hero {
+      display: grid;
+      gap: 0.95rem;
+    }
+
+    .salon-hero__image {
+      width: 100%;
+      min-height: 56svh;
+      max-height: 78svh;
+      object-fit: cover;
+    }
+
+    .salon-hero__title {
+      margin: 0;
+      font-size: clamp(0.84rem, 1.4vw, 1.06rem);
+      font-weight: 350;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .salon-heading {
+      margin: 0;
+      font-size: clamp(0.66rem, 1vw, 0.76rem);
+      font-weight: 320;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(17, 17, 17, 0.68);
+    }
+
+    .salon-about,
+    .salon-details {
+      display: grid;
+      gap: 1.2rem;
+      max-width: 50rem;
+    }
+
+    .salon-about__text {
+      margin: 0;
+      font-size: clamp(0.78rem, 1.2vw, 0.92rem);
+      line-height: 1.95;
+      letter-spacing: 0.06em;
+      color: rgba(17, 17, 17, 0.78);
+    }
+
+    .salon-space {
+      display: grid;
+      gap: 1.2rem;
+    }
+
+    .salon-space__grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .salon-space__item {
+      margin: 0;
+    }
+
+    .salon-space__item img {
+      width: 100%;
+      height: clamp(16rem, 58vw, 31rem);
+      object-fit: cover;
+      display: block;
+    }
+
+    .salon-details__list {
+      margin: 0;
+      display: grid;
+      gap: 0.78rem;
+    }
+
+    .salon-details__row {
+      display: grid;
+      gap: 0.3rem;
+    }
+
+    .salon-details__row dt,
+    .salon-details__row dd {
+      margin: 0;
+      font-size: clamp(0.68rem, 0.92vw, 0.76rem);
+      line-height: 1.8;
+      letter-spacing: 0.08em;
+      color: rgba(17, 17, 17, 0.78);
+    }
+
+    .salon-details__row dt {
+      text-transform: uppercase;
+      color: rgba(17, 17, 17, 0.52);
+    }
+
+    .salon-details__row a {
+      color: rgba(17, 17, 17, 0.78);
+      text-decoration: none;
+      transition: color 220ms ease, letter-spacing 220ms ease;
+    }
+
+    .salon-details__row a:hover {
+      color: rgba(17, 17, 17, 0.98);
+      letter-spacing: 0.1em;
+    }
+
+    @media (min-width: 760px) {
+      .salon-space__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.4rem;
+      }
+
+      .salon-space__item:first-child,
+      .salon-space__item:last-child {
+        grid-column: span 2;
+      }
+
+      .salon-space__item img {
+        height: clamp(20rem, 40vw, 34rem);
+      }
+
+      .salon-details__list {
+        max-width: 42rem;
+      }
+    }
+  </style>
+</BaseLayout>

@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout pageTitle="EVENTS | Lab hair design" pageDescription="Shizuoka city events and culture feed.">
+  <section class="events-page" aria-label="Events page">
+    <header class="events-page__head">
+      <p class="events-page__label">CITY FEED</p>
+      <h1 class="events-page__title">EVENTS</h1>
+      <p class="events-page__lead">
+        静岡市のイベント、アート、音楽、ベトナムカルチャーなど、
+        Lab hair design が街とつながるための情報アーカイブです。
+      </p>
+    </header>
+
+    <p class="events-page__note">
+      詳細な投稿は <a href="/info">INFO</a> からご覧いただけます。
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .events-page {
+    width: min(920px, calc(100% - 32px));
+    margin: 32px auto 72px;
+  }
+
+  .events-page__head {
+    display: grid;
+    gap: 10px;
+    border-top: 1px solid rgba(17, 17, 17, 0.08);
+    padding-top: 24px;
+  }
+
+  .events-page__label {
+    margin: 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    color: rgba(24, 24, 24, 0.62);
+  }
+
+  .events-page__title {
+    margin: 0;
+    font-size: clamp(1.38rem, 2.5vw, 2rem);
+    letter-spacing: 0.08em;
+    font-weight: 300;
+  }
+
+  .events-page__lead {
+    margin: 0;
+    max-width: 44rem;
+    line-height: 1.95;
+    color: rgba(20, 20, 20, 0.8);
+  }
+
+  .events-page__note {
+    margin: 24px 0 0;
+    font-size: 0.9rem;
+    color: rgba(24, 24, 24, 0.72);
+  }
+
+  .events-page__note a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+</style>

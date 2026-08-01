@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GalleryGrid from '../components/GalleryGrid.astro';
+import { fetchPhotoItems } from '../lib/content-api';
+
+const photoItems = await fetchPhotoItems();
+---
+
+<BaseLayout pageTitle="PHOTO | Lab hair design" pageDescription="Lab Hair Design PHOTO gallery">
+  <GalleryGrid title="PHOTO" ariaLabel="Photo gallery listing" pagePath="/photo" items={photoItems} linkMode="image" />
+</BaseLayout>

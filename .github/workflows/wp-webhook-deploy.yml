@@ -1,0 +1,42 @@
+name: Build and Deploy (WordPress Webhook)
+
+on:
+  repository_dispatch:
+    types:
+      - wp_content_updated
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static site
+        run: npm run build
+
+      - name: Deploy dist via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.CONOHA_FTP_HOST }}
+          username: ${{ secrets.CONOHA_FTP_USERNAME }}
+          password: ${{ secrets.CONOHA_FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.CONOHA_FTP_PORT }}
+          local-dir: ./dist/
+          server-dir: ${{ secrets.CONOHA_FTP_REMOTE_DIR }}
+          dangerous-clean-slate: false

@@ -1,0 +1,217 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { fetchPriceSections } from '../lib/content-api';
+
+const priceSections = await fetchPriceSections();
+
+const normalize = (value: unknown) => String(value ?? '').replace(/\s+/g, ' ').trim();
+const toOrderNumber = (value: unknown) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+};
+const toTimeNumber = (value: unknown) => {
+  const parsed = Date.parse(String(value || ''));
+  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+};
+const compareAscending = (left: any, right: any) => {
+  const orderDiff = toOrderNumber(left?.menuOrder) - toOrderNumber(right?.menuOrder);
+  if (orderDiff !== 0) return orderDiff;
+
+  const timeDiff = toTimeNumber(left?.createdAt) - toTimeNumber(right?.createdAt);
+  if (timeDiff !== 0) return timeDiff;
+
+  return normalize(left?.name || left?.category).localeCompare(normalize(right?.name || right?.category), 'ja');
+};
+const resolveDisplayPrice = (item: any) => {
+  const directPrice = normalize(item?.price);
+  if (directPrice) return directPrice;
+
+  const notePrice = normalize(item?.note);
+  return /円|¥|￥|[0-9]+/.test(notePrice) ? notePrice : '';
+};
+const formatCategoryTitle = (category: unknown) => {
+  const raw = normalize(category).toUpperCase();
+  if (/COUPON|クーポン/.test(raw)) return 'RECOMMENDED COUPON';
+  if (/CUT|カット/.test(raw)) return 'CUT';
+  if (/COLOR|カラー|BLEACH|ブリーチ/.test(raw)) return 'COLOR';
+  if (/PERM|STRAIGHT|縮毛|ストレート|パーマ/.test(raw)) return 'PERM & STRAIGHT';
+  if (/TREAT|CARE|TR|トリートメント|ケア/.test(raw)) return 'TREATMENT';
+  return raw || 'MENU';
+};
+
+const sortedSections = Array.isArray(priceSections)
+  ? [...priceSections].sort(compareAscending)
+  : [];
+---
+<BaseLayout pageTitle="Price | Lab hair design" pageDescription="Lab Hair Design の料金ページ">
+  <section class="section price-hero price-hero--minimal">
+    <div class="price-hero__nav">
+      <p class="price-hero__crumb">Price</p>
+    </div>
+  </section>
+
+  <section class="section price-list-wrap">
+    <div class="price-list" id="price-list" aria-live="polite" aria-label="価格メニュー">
+      {sortedSections.length === 0 ? (
+        <p class="price-list__status">WordPressにメニュー投稿がまだありません。</p>
+      ) : (
+        sortedSections.map((section) => {
+          const items = Array.isArray(section?.items)
+            ? [...section.items].sort(compareAscending)
+            : [];
+          if (items.length === 0) return null;
+          return (
+            <section class="price-group" style="display:grid;gap:0.5rem;justify-items:center;text-align:center;">
+              <h2 class="price-group__title" style="margin:0;font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;opacity:0.72;text-align:center;">{formatCategoryTitle(section?.category)}</h2>
+              <div class="price-group__items" style="display:grid;gap:0.1rem;justify-items:center;width:100%;text-align:center;">
+                {items.map((item) => {
+                  const displayPrice = resolveDisplayPrice(item);
+                  return (
+                    <article class="price-item" style="width:min(500px,100%);margin:0 auto;padding:0.45rem 0;display:flex;flex-direction:column;gap:0.28rem;align-items:center;justify-content:center;text-align:center;border-bottom:1px solid rgba(45,31,8,0.14);">
+                      <div class="price-item__main" style="display:grid;gap:0.22rem;justify-items:center;text-align:center;align-items:center;">
+                        <p class="price-item__name" style="margin:0;font-size:0.84rem;line-height:1.45;letter-spacing:0.02em;text-align:center;">{normalize(item?.name)}</p>
+                      </div>
+                      {displayPrice ? <p class="price-item__value" style="margin:0;font-size:0.9rem;letter-spacing:0.04em;white-space:nowrap;text-align:center;">{displayPrice}</p> : null}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })
+      )}
+    </div>
+  </section>
+
+  <style>
+    .price-hero--minimal {
+      padding-top: 1.8rem;
+      padding-bottom: 1rem;
+    }
+
+    .price-hero__nav {
+      max-width: 520px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .price-hero__crumb {
+      margin: 0;
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      opacity: 0.78;
+    }
+
+    .price-list-wrap {
+      display: flex;
+      justify-content: center;
+      padding-top: 0.2rem;
+    }
+
+    .price-list {
+      width: min(560px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 1.7rem;
+    }
+
+    .price-list__status {
+      margin: 0;
+      text-align: center;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      opacity: 0.64;
+      padding: 2rem 0;
+    }
+
+    .price-group {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .price-group__title {
+      margin: 0;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.72;
+      text-align: center;
+    }
+
+    .price-group__items {
+      display: grid;
+      gap: 0.1rem;
+      justify-items: center;
+    }
+
+    .price-item {
+      width: min(500px, 100%);
+      margin: 0 auto;
+      padding: 0.45rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.28rem;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid rgba(45, 31, 8, 0.14);
+      text-align: center;
+    }
+
+    .price-item__main {
+      display: grid;
+      gap: 0.22rem;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .price-item__name {
+      margin: 0;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+
+    .price-item__value {
+      margin: 0;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    @media (max-width: 680px) {
+      .price-hero--minimal {
+        padding-top: 1.45rem;
+        padding-bottom: 0.9rem;
+      }
+
+      .price-list {
+        width: min(360px, 100%);
+        gap: 1.35rem;
+      }
+
+      .price-group {
+        gap: 0.45rem;
+      }
+
+      .price-group__title {
+        font-size: 0.68rem;
+      }
+
+      .price-item {
+        width: min(340px, 100%);
+        gap: 0.24rem;
+      }
+
+      .price-item__name {
+        font-size: 0.78rem;
+      }
+
+      .price-item__value {
+        font-size: 0.82rem;
+      }
+    }
+  </style>
+</BaseLayout>

@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Node / Astro
+node_modules/
+dist/
+.astro/
+
+# Local env and temp
+.env
+.tmp/
+.wrangler/
+
+# Archives and large local exports
+*.zip
+写真/

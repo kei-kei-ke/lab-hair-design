@@ -1,0 +1,626 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getHomeData } from '../lib/home-data';
+import type { HomeMediaItem } from '../types/home';
+
+const homeData = await getHomeData();
+
+const mainVisualItems = homeData.mainVisual.items;
+const mainVisualTransitionMs = Math.max(2000, Math.round(homeData.mainVisual.transitionSeconds * 1000));
+
+function pickFour(items: HomeMediaItem[]): HomeMediaItem[] {
+  if (!items.length) return [];
+
+  const output: HomeMediaItem[] = [];
+  for (let index = 0; index < 4; index += 1) {
+    output.push(items[index % items.length]);
+  }
+  return output;
+}
+
+const hairMonitorItems = pickFour(homeData.hairMonitor.items);
+const photoMonitorItems = pickFour(homeData.photoMonitor.items);
+// Placeholder cards: can be swapped to CMS/API-fed city monitor items later.
+const cityMonitorCards = [
+  {
+    title: 'SHIZUOKA ART WEEKEND',
+    href: '/events',
+    image: homeData.photoMonitor.items[0]?.url ?? homeData.mainVisual.items[0]?.url ?? '',
+  },
+  {
+    title: 'RIVER SIDE MUSIC',
+    href: '/events',
+    image: homeData.hairMonitor.items[1]?.url ?? homeData.mainVisual.items[0]?.url ?? '',
+  },
+  {
+    title: 'VIETNAM CULTURE MARKET',
+    href: '/events',
+    image: homeData.photoMonitor.items[2]?.url ?? homeData.mainVisual.items[0]?.url ?? '',
+  },
+  {
+    title: 'LOCAL DESIGN FAIR',
+    href: '/info',
+    image: homeData.hairMonitor.items[3]?.url ?? homeData.mainVisual.items[0]?.url ?? '',
+  },
+  {
+    title: 'CITY NIGHT PROGRAM',
+    href: '/events',
+    image: homeData.photoMonitor.items[3]?.url ?? homeData.mainVisual.items[0]?.url ?? '',
+  },
+  {
+    title: 'STREET PHOTO WALK',
+    href: '/info',
+    image: homeData.hairMonitor.items[0]?.url ?? homeData.mainVisual.items[0]?.url ?? '',
+  },
+].filter((card) => card.image);
+---
+
+<BaseLayout>
+  <section class="home-layout" aria-label="Home Layout">
+    <div class="home-main-visual" aria-label="Main Visual">
+      {mainVisualItems.length > 0 ? (
+        <div
+          class="home-main-visual__stage"
+          data-home-main-visual
+          data-main-visual-count={mainVisualItems.length}
+        >
+          <img
+            class="home-main-visual__image is-primary"
+            src={mainVisualItems[0].url}
+            alt={mainVisualItems[0].alt ?? 'Main Visual'}
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+            sizes="(max-width: 767px) 100vw, 1120px"
+          />
+          <img
+            class="home-main-visual__image is-secondary"
+            src={mainVisualItems[0].url}
+            alt={mainVisualItems[0].alt ?? 'Main Visual'}
+            loading="eager"
+            decoding="async"
+            fetchpriority="low"
+            sizes="(max-width: 767px) 100vw, 1120px"
+            aria-hidden="true"
+          />
+        </div>
+      ) : (
+        <div class="home-main-visual__empty" aria-hidden="true"></div>
+      )}
+    </div>
+
+    <div class="home-monitors-stage" data-home-monitors-stage>
+      <div class="home-city-feed" aria-label="City monitor background">
+        {cityMonitorCards.map((card) => (
+          <a class="home-city-card" href={card.href} aria-label={`Open ${card.title}`}>
+            <img src={card.image} alt="" loading="lazy" decoding="async" aria-hidden="true" />
+            <span>{card.title}</span>
+          </a>
+        ))}
+      </div>
+
+      <div class="home-monitors" aria-label="Home Monitors">
+        <a
+          class="home-monitor"
+          href={homeData.hairMonitor.linkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open Hair Instagram"
+          data-home-hair-monitor
+        >
+          <div class="home-monitor__grid">
+            {hairMonitorItems.map((item, index) => (
+              <figure class="home-monitor__cell" aria-hidden="true">
+                <img
+                  src={item.url}
+                  alt={item.alt ?? `Hair Monitor ${index + 1}`}
+                  loading="lazy"
+                  decoding="async"
+                  sizes="(max-width: 767px) calc((100vw - 28px) / 2), (max-width: 1120px) calc((100vw - 44px) / 4), 274px"
+                  data-hair-slot
+                />
+              </figure>
+            ))}
+          </div>
+        </a>
+
+        <a
+          class="home-monitor"
+          href={homeData.photoMonitor.linkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open Photo Instagram"
+          data-home-photo-monitor
+        >
+          <div class="home-monitor__grid">
+            {photoMonitorItems.map((item, index) => (
+              <figure class="home-monitor__cell" aria-hidden="true">
+                <img
+                  src={item.url}
+                  alt={item.alt ?? `Photo Monitor ${index + 1}`}
+                  loading="lazy"
+                  decoding="async"
+                  sizes="(max-width: 767px) calc((100vw - 28px) / 2), (max-width: 1120px) calc((100vw - 44px) / 4), 274px"
+                  data-photo-slot
+                />
+              </figure>
+            ))}
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <script
+    is:inline
+    define:vars={{
+      hairMonitorPool: homeData.hairMonitor.items.map((item) => ({ url: item.url, alt: item.alt ?? 'Hair Monitor' })),
+      hairMonitorTransitionMs: Math.max(2000, Math.round(homeData.hairMonitor.transitionSeconds * 1000)),
+      photoMonitorPool: homeData.photoMonitor.items.map((item) => ({ url: item.url, alt: item.alt ?? 'Photo Monitor' })),
+      photoMonitorTransitionMs: Math.max(2000, Math.round(homeData.photoMonitor.transitionSeconds * 1000)),
+      mainVisualSlides: mainVisualItems.map((item) => ({ url: item.url, alt: item.alt ?? 'Main Visual' })),
+      mainVisualTransitionMs,
+    }}
+  >
+    (() => {
+      const stage = document.querySelector('[data-home-main-visual]');
+      const mainFadeDurationMs = 700;
+      const monitorFadeDurationMs = 420;
+
+      const createDifferentPicker = (pool) => {
+        return (currentUrl) => {
+          let next = pool[Math.floor(Math.random() * pool.length)];
+          let attempts = 0;
+
+          while (next && next.url === currentUrl && attempts < 10) {
+            next = pool[Math.floor(Math.random() * pool.length)];
+            attempts += 1;
+          }
+
+          return next;
+        };
+      };
+
+      const fadeReplaceImage = (target, next, fadeDurationMs) => {
+        target.style.opacity = '0';
+
+        window.setTimeout(() => {
+          target.setAttribute('src', next.url);
+          target.setAttribute('alt', next.alt || 'Monitor');
+          target.style.opacity = '1';
+        }, Math.floor(fadeDurationMs / 2));
+      };
+
+      const pulseMonitor = (monitor) => {
+        monitor.classList.add('is-flash');
+        window.setTimeout(() => {
+          monitor.classList.remove('is-flash');
+        }, 120);
+      };
+
+      const triggerMonitorArtifact = (monitor) => {
+        const dice = Math.random();
+        let className = '';
+        let holdMs = 0;
+
+        if (dice < 0.34) {
+          className = 'is-dim';
+          holdMs = 90;
+        } else if (dice < 0.67) {
+          className = 'is-scanline';
+          holdMs = 70;
+        } else {
+          className = 'is-noise';
+          holdMs = 80;
+        }
+
+        monitor.classList.add(className);
+        window.setTimeout(() => {
+          monitor.classList.remove(className);
+        }, holdMs);
+      };
+
+      const setupMonitorAnimation = ({ monitor, pool, slotSelector, transitionMs, phaseOffsetMs, altFallback }) => {
+        if (!monitor) return;
+
+        const slides = Array.isArray(pool) ? pool.filter((slide) => slide && slide.url) : [];
+        if (slides.length <= 1) return;
+
+        const slots = Array.from(monitor.querySelectorAll(slotSelector));
+        if (!slots.length) return;
+
+        const pickDifferentSlide = createDifferentPicker(slides);
+        const intervalMs = Number(transitionMs) > 0 ? Number(transitionMs) : 4000;
+
+        const tick = () => {
+          if (document.hidden) return;
+
+          const target = slots[Math.floor(Math.random() * slots.length)];
+          const currentUrl = target.getAttribute('src') || '';
+          const next = pickDifferentSlide(currentUrl);
+
+          if (!next || !next.url || next.url === currentUrl) return;
+
+          fadeReplaceImage(target, { ...next, alt: next.alt || altFallback }, monitorFadeDurationMs);
+          pulseMonitor(monitor);
+
+          // Keep artifacts very rare so they feel incidental, not decorative.
+          if (Math.random() < 0.045) {
+            triggerMonitorArtifact(monitor);
+          }
+        };
+
+        window.setTimeout(() => {
+          tick();
+          window.setInterval(tick, intervalMs);
+        }, phaseOffsetMs);
+      };
+
+      setupMonitorAnimation({
+        monitor: document.querySelector('[data-home-hair-monitor]'),
+        pool: hairMonitorPool,
+        slotSelector: '[data-hair-slot]',
+        transitionMs: hairMonitorTransitionMs,
+        phaseOffsetMs: 900,
+        altFallback: 'Hair Monitor',
+      });
+
+      setupMonitorAnimation({
+        monitor: document.querySelector('[data-home-photo-monitor]'),
+        pool: photoMonitorPool,
+        slotSelector: '[data-photo-slot]',
+        transitionMs: photoMonitorTransitionMs,
+        phaseOffsetMs: 1600,
+        altFallback: 'Photo Monitor',
+      });
+
+      const monitorNodes = Array.from(document.querySelectorAll('.home-monitor'));
+      if (monitorNodes.length) {
+        window.setInterval(() => {
+          if (document.hidden) return;
+          if (Math.random() > 0.25) return;
+
+          const target = monitorNodes[Math.floor(Math.random() * monitorNodes.length)];
+          triggerMonitorArtifact(target);
+        }, 16000);
+      }
+
+      if (!stage) return;
+
+      const slides = Array.isArray(mainVisualSlides) ? mainVisualSlides.filter((slide) => slide && slide.url) : [];
+      if (slides.length <= 1) return;
+
+      const primary = stage.querySelector('.is-primary');
+      const secondary = stage.querySelector('.is-secondary');
+      if (!primary || !secondary) return;
+
+      let currentIndex = 0;
+      let isAnimating = false;
+
+      const intervalMs = Number(mainVisualTransitionMs) > mainFadeDurationMs
+        ? Number(mainVisualTransitionMs)
+        : 3000;
+
+      const switchSlide = () => {
+        if (document.hidden) return;
+        if (isAnimating) return;
+        isAnimating = true;
+
+        const nextIndex = (currentIndex + 1) % slides.length;
+        const next = slides[nextIndex];
+
+        secondary.setAttribute('src', next.url);
+        secondary.setAttribute('alt', next.alt || 'Main Visual');
+        secondary.style.opacity = '0';
+
+        requestAnimationFrame(() => {
+          secondary.style.opacity = '1';
+          primary.style.opacity = '0';
+        });
+
+        window.setTimeout(() => {
+          primary.setAttribute('src', next.url);
+          primary.setAttribute('alt', next.alt || 'Main Visual');
+          primary.style.opacity = '1';
+          secondary.style.opacity = '0';
+          currentIndex = nextIndex;
+          isAnimating = false;
+        }, mainFadeDurationMs);
+      };
+
+      window.setInterval(switchSlide, intervalMs);
+    })();
+  </script>
+</BaseLayout>
+
+<style>
+  .home-layout {
+    width: min(1120px, calc(100% - 24px));
+    margin: 24px auto 40px;
+    display: grid;
+    gap: 28px;
+    box-sizing: border-box;
+  }
+
+  .home-main-visual {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 2px;
+    margin-bottom: 0;
+  }
+
+  .home-main-visual__stage,
+  .home-main-visual__empty {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    display: block;
+    position: relative;
+    overflow: hidden;
+    background: #f2f2f2;
+    contain: paint;
+    content-visibility: auto;
+    contain-intrinsic-size: 800px 450px;
+  }
+
+  .home-main-visual__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    display: block;
+    transition: opacity 700ms ease;
+  }
+
+  .home-main-visual__image.is-primary {
+    opacity: 1;
+    z-index: 1;
+  }
+
+  .home-main-visual__image.is-secondary {
+    opacity: 0;
+    z-index: 2;
+  }
+
+  .home-monitors-stage {
+    width: min(818px, calc(80% + 58px));
+    margin: 0 auto;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .home-city-feed {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: minmax(78px, auto);
+    gap: 12px;
+    align-content: center;
+    padding: 10px 12px;
+    pointer-events: none;
+  }
+
+  .home-city-feed::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.24) 100%);
+    pointer-events: none;
+  }
+
+  .home-city-card {
+    position: relative;
+    min-height: 78px;
+    border-radius: 2px;
+    overflow: hidden;
+    pointer-events: auto;
+    text-decoration: none;
+    background: #d7d7d7;
+    opacity: 0.15;
+    filter: blur(6px) saturate(0.56) grayscale(0.22);
+    transition: opacity 220ms ease, filter 220ms ease;
+  }
+
+  .home-city-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(38, 40, 42, 0.28);
+    pointer-events: none;
+  }
+
+  .home-city-card:nth-child(2n) {
+    transform: translate3d(0, 10px, 0);
+  }
+
+  .home-city-card:nth-child(3n) {
+    transform: translate3d(0, -7px, 0);
+  }
+
+  .home-city-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.58) contrast(0.82) saturate(0.62);
+  }
+
+  .home-city-card span {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 6px;
+    font-size: 0.5rem;
+    letter-spacing: 0.12em;
+    line-height: 1.35;
+    text-transform: uppercase;
+    color: rgba(24, 24, 24, 0.2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .home-city-card:hover {
+    opacity: 0.18;
+    filter: blur(5px) saturate(0.64) grayscale(0.16);
+  }
+
+  .home-monitors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+    width: 100%;
+    margin: 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .home-monitor {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+    transition: filter 120ms ease;
+  }
+
+  .home-monitor::before,
+  .home-monitor::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+
+  .home-monitor::after {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .home-monitor.is-flash::after {
+    opacity: 0.42;
+  }
+
+  .home-monitor.is-dim {
+    filter: brightness(0.92) saturate(0.96);
+  }
+
+  .home-monitor.is-scanline::before {
+    opacity: 0.26;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.11) 0,
+      rgba(255, 255, 255, 0.11) 1px,
+      rgba(255, 255, 255, 0) 1px,
+      rgba(255, 255, 255, 0) 3px
+    );
+  }
+
+  .home-monitor.is-noise::before {
+    opacity: 0.18;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.34) 0.45px, transparent 0.6px);
+    background-size: 2px 2px;
+    mix-blend-mode: soft-light;
+  }
+
+  .home-monitor__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+
+  .home-monitor__cell {
+    margin: 0;
+  }
+
+  .home-monitor__cell img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    opacity: 1;
+    transition: opacity 420ms ease;
+  }
+
+  @media (max-width: 767px) {
+    .home-layout {
+      width: calc(100% - 10px);
+      margin: 12px auto 24px;
+      gap: 12px;
+    }
+
+    .home-main-visual {
+      margin-bottom: 56px;
+    }
+
+    .home-main-visual__stage,
+    .home-main-visual__empty {
+      aspect-ratio: 4 / 5;
+      contain-intrinsic-size: 360px 450px;
+    }
+
+    .home-monitors-stage {
+      width: 91vw;
+    }
+
+    .home-city-feed {
+      display: grid;
+      inset: 0;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-auto-rows: minmax(70px, auto);
+      gap: 10px;
+      padding: 8px;
+    }
+
+    .home-city-card {
+      opacity: 0.17;
+      filter: blur(5px) saturate(0.6) grayscale(0.2);
+    }
+
+    .home-monitors {
+      width: 88%;
+      margin: 0 auto;
+      gap: clamp(18px, 5.2vw, 24px);
+    }
+
+    .home-monitor {
+      width: 100%;
+    }
+
+    .home-monitor__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .home-layout {
+      gap: 28px;
+    }
+
+    .home-main-visual {
+      margin-bottom: 64px;
+    }
+
+    .home-main-visual__stage,
+    .home-main-visual__empty {
+      aspect-ratio: 16 / 9;
+    }
+
+    .home-monitors {
+      gap: 72px;
+    }
+
+    .home-city-feed {
+      inset: 0;
+    }
+  }
+</style>

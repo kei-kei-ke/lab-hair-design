@@ -1,0 +1,157 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { fetchInfoPosts } from '../../lib/content-api';
+
+const stripAllTags = (value: unknown) => String(value ?? '').replace(/<[^>]*>/g, '').trim();
+
+const formatDate = (value: unknown) => {
+  const date = new Date(String(value || ''));
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
+};
+
+export async function getStaticPaths() {
+  const posts = await fetchInfoPosts();
+  if (!Array.isArray(posts) || posts.length === 0) {
+    return [{ params: { id: '191' } }];
+  }
+
+  const keys = posts
+    .map((post) => String(post.slug || post.id || '').trim())
+    .filter((value) => value !== '');
+
+  return [...new Set(keys)].map((value) => ({ params: { id: value } }));
+}
+
+const id = String(Astro.params.id || '').trim();
+const posts = await fetchInfoPosts();
+const post = posts.find((entry) => String(entry.slug || '').trim() === id || String(entry.id || '').trim() === id) ?? null;
+
+const title = stripAllTags(post?.title || 'Info') || 'Info';
+const dateLabel = formatDate(post?.date);
+const image = String(post?.thumbnail || '').trim();
+const renderedContent = String(post?.content || '').trim();
+const fallbackText = stripAllTags(post?.content || post?.excerpt || '').trim();
+---
+<BaseLayout pageTitle={`${title} | Info`} pageDescription={fallbackText.slice(0, 120)}>
+  <section class="section info-detail">
+    <div class="info-detail__inner">
+      <p class="info-detail__label">Info Detail</p>
+      <h1 class="info-detail__title">{title}</h1>
+      {dateLabel ? <p class="info-detail__date">{dateLabel}</p> : null}
+
+      {image ? (
+        <div class="info-detail__thumb">
+          <img src={image} alt={title} loading="lazy" />
+        </div>
+      ) : null}
+
+      {renderedContent ? (
+        <article class="info-detail__content wp-content" set:html={renderedContent}></article>
+      ) : (
+        <article class="info-detail__content"><p>{fallbackText || '本文は準備中です。'}</p></article>
+      )}
+    </div>
+  </section>
+
+  <style>
+    .info-detail {
+      width: 100%;
+      display: grid;
+      place-items: center;
+      padding-top: 0.8rem;
+    }
+
+    .info-detail__inner {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      margin-top: 0;
+      margin-bottom: 0;
+      display: grid;
+      gap: 0.9rem;
+      text-align: center;
+    }
+
+    .info-detail__label {
+      margin: 0;
+      font-size: 0.62rem;
+      letter-spacing: 0.21em;
+      text-transform: uppercase;
+      opacity: 0.72;
+      font-weight: 300;
+      color: rgba(0, 0, 0, 0.58);
+    }
+
+    .info-detail__title {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.9;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      color: rgba(0, 0, 0, 0.7);
+      text-decoration: none;
+      pointer-events: none;
+    }
+
+    .info-detail__title :global(a) {
+      display: none;
+    }
+
+    .info-detail__date {
+      margin: 0;
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      opacity: 1;
+      font-weight: 300;
+      color: rgba(0, 0, 0, 0.56);
+    }
+
+    .info-detail__thumb {
+      width: 100%;
+      text-align: center;
+    }
+
+    .info-detail__thumb img {
+      max-width: min(100%, 700px);
+      height: auto;
+      display: inline-block;
+      border-radius: 12px;
+    }
+
+    .info-detail__content {
+      text-align: left;
+      font-size: 0.78rem;
+      line-height: 2.15;
+      letter-spacing: 0.02em;
+      margin-top: 0.7rem;
+      font-weight: 300;
+      color: rgba(0, 0, 0, 0.67);
+    }
+
+    :global(.info-detail__content a) {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      word-break: break-word;
+    }
+
+    @media (max-width: 680px) {
+      .info-detail__inner {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+
+      .info-detail__title {
+        font-size: 0.94rem;
+      }
+
+      .info-detail__content {
+        font-size: 0.74rem;
+      }
+    }
+  </style>
+</BaseLayout>

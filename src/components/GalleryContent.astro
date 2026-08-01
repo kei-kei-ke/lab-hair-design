@@ -1,0 +1,118 @@
+---
+import ImageTile from './ImageTile.astro';
+import { fetchGalleryFeed } from '../lib/content-api';
+
+const galleryFeed = await fetchGalleryFeed();
+const uniqueHairStyles = galleryFeed.hair;
+const uniquePhotoGallery = galleryFeed.photo;
+
+const hairItems = uniqueHairStyles.slice(0, 6).map((item) => ({ category: 'hair', ...item }));
+const photoItems = uniquePhotoGallery.slice(0, 6).map((item) => ({ category: 'photo', ...item }));
+---
+
+<style is:global>
+  /* 大元の設定を無視して確実に16pxの隙間を強制する */
+  .hair-grid.hair-grid--instagram {
+    display: grid !important;
+    gap: 16px !important;
+    column-gap: 16px !important;
+    row-gap: 16px !important;
+  }
+</style>
+
+<section class="section hair-top hair-top--minimal" id="gallery">
+  <div class="hair-top__nav">
+    <p class="hair-top__crumb">GALLERY</p>
+  </div>
+</section>
+
+<section class="gallery-categories" aria-label="Gallery categories">
+  <div class="gallery-categories__inner">
+    <button class="gallery-categories__button is-active" type="button" data-gallery-category="all">ALL</button>
+    <span class="gallery-categories__sep" aria-hidden="true">|</span>
+    <button class="gallery-categories__button" type="button" data-gallery-category="hair">HAIR STYLES</button>
+    <span class="gallery-categories__sep" aria-hidden="true">|</span>
+    <button class="gallery-categories__button" type="button" data-gallery-category="photo">VIETNAM FASHION</button>
+  </div>
+</section>
+
+<section class="section hair-grid-section" aria-label="Unified gallery grid">
+  <div class="hair-grid hair-grid--instagram" id="hair-grid" style="margin-bottom: 40px;">
+    {hairItems.map((item) => (
+      <article class="hair-card">
+        <button class="hair-card__image hair-card__image-button" type="button" data-photo-src={item.image}>
+          <ImageTile src={item.image} alt={item.title} fill />
+        </button>
+      </article>
+    ))}
+  </div>
+
+  <div style="text-align: center; margin: 40px 0; font-size: 14px; letter-spacing: 0.2em; color: #888;">INSTAGRAM</div>
+
+  <div class="hair-grid hair-grid--instagram" id="vietnam-grid">
+    {photoItems.map((item) => (
+      <article class="hair-card">
+        <button class="hair-card__image hair-card__image-button" type="button" data-photo-src={item.image}>
+          <ImageTile src={item.image} alt={item.title} fill />
+        </button>
+      </article>
+    ))}
+  </div>
+</section>
+
+<div class="photo-lightbox" id="photo-lightbox" hidden aria-hidden="true">
+  <div class="photo-lightbox__backdrop" id="photo-lightbox-backdrop"></div>
+  <div class="photo-lightbox__dialog" role="dialog" aria-modal="true" aria-label="Expanded gallery photo">
+    <button class="photo-lightbox__close" id="photo-lightbox-close" type="button" aria-label="Close lightbox">✕</button>
+    <img class="photo-lightbox__image" id="photo-lightbox-image" alt="Expanded photo" />
+  </div>
+</div>
+
+<script is:inline define:vars={{ hairData: hairItems, photoData: photoItems }}>
+  const photoGrid = document.getElementById('hair-grid');
+  const vietnamGrid = document.getElementById('vietnam-grid');
+  const categoryButtons = Array.from(document.querySelectorAll('[data-gallery-category]'));
+  const lightbox = document.getElementById('photo-lightbox');
+  const lightboxBackdrop = document.getElementById('photo-lightbox-backdrop');
+  const lightboxClose = document.getElementById('photo-lightbox-close');
+  const lightboxImage = document.getElementById('photo-lightbox-image');
+
+  categoryButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      categoryButtons.forEach(btn => btn.classList.remove('is-active'));
+      button.classList.add('is-active');
+      const cat = button.getAttribute('data-gallery-category');
+      
+      if (cat === 'all') {
+        photoGrid.style.display = 'grid';
+        vietnamGrid.style.display = 'grid';
+      } else if (cat === 'hair') {
+        photoGrid.style.display = 'grid';
+        vietnamGrid.style.display = 'none';
+      } else {
+        photoGrid.style.display = 'none';
+        vietnamGrid.style.display = 'grid';
+      }
+    });
+  });
+
+  document.querySelectorAll('.hair-card__image-button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const src = btn.getAttribute('data-photo-src');
+      if (src) {
+        lightboxImage.src = src;
+        lightbox.hidden = false;
+        lightbox.removeAttribute('aria-hidden');
+      }
+    });
+  });
+
+  const closeLightbox = () => {
+    lightbox.hidden = true;
+    lightbox.setAttribute('aria-hidden', 'true');
+    lightboxImage.src = '';
+  };
+
+  lightboxClose?.addEventListener('click', closeLightbox);
+  lightboxBackdrop?.addEventListener('click', closeLightbox);
+</script>

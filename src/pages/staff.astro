@@ -1,0 +1,157 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ImageTile from '../components/ImageTile.astro';
+import { fetchStaffMembers, fetchStaffMessage } from '../lib/content-api';
+
+const staffMembers = await fetchStaffMembers();
+const staffMessage = await fetchStaffMessage();
+---
+<BaseLayout pageTitle="Staff | Lab hair design" pageDescription="Lab Hair Design のスタッフ紹介ページ">
+  <section class="section staff-hero staff-hero--minimal">
+    <div class="section-head">
+      <p class="section-label">Staff</p>
+    </div>
+  </section>
+
+  <section class="section staff-grid staff-grid--minimal" id="staff-grid">
+    {staffMembers.map((member) => (
+      <article class="staff-card staff-card--minimal">
+        <div class="staff-card__image staff-card__image--minimal"><ImageTile src={member.image} alt={member.name} /></div>
+        <p class="staff-card__name staff-card__name--minimal">{member.name}</p>
+        <p class="staff-card__role staff-card__role--minimal">{member.role}</p>
+        <p class="staff-card__bio staff-card__bio--minimal">{member.profile}</p>
+      </article>
+    ))}
+  </section>
+
+  <section class="section staff-message staff-message--minimal" aria-labelledby="staff-message-title">
+    <div class="staff-message__inner">
+      <p class="staff-message__label">Message</p>
+      <h2 class="staff-message__title" id="staff-message-title">{staffMessage.title}</h2>
+      <div class="staff-message__body">
+        {staffMessage.paragraphs.map((line) => (
+          <p>{line}</p>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <style>
+    :global(.staff-hero.staff-hero--minimal .section-head) {
+      width: 100% !important;
+      margin: 0 auto !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      text-align: center !important;
+    }
+
+    :global(.staff-hero.staff-hero--minimal .section-label) {
+      margin: 0 auto !important;
+      text-align: center !important;
+    }
+
+    :global(.staff-grid.staff-grid--minimal) {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 20px !important;
+      max-width: 340px !important;
+      width: min(340px, 100%) !important;
+      margin: 0 auto !important;
+      padding-top: 1.2rem !important;
+      justify-content: center !important;
+    }
+
+    :global(.staff-grid.staff-grid--minimal .staff-card--minimal) {
+      display: grid !important;
+      gap: 8px !important;
+    }
+
+    :global(.staff-grid.staff-grid--minimal .staff-card__image--minimal) {
+      width: 100% !important;
+      height: 130px !important;
+      aspect-ratio: 3 / 4 !important;
+      overflow: hidden !important;
+      border-radius: 10px !important;
+    }
+
+    :global(.staff-grid.staff-grid--minimal .staff-card__image--minimal img),
+    :global(.staff-grid.staff-grid--minimal .staff-card__image--minimal .image-tile) {
+      width: 100% !important;
+      height: 130px !important;
+      aspect-ratio: 3 / 4 !important;
+      object-fit: cover !important;
+      object-position: center center !important;
+    }
+
+    :global(.staff-grid.staff-grid--minimal .staff-card__name--minimal) {
+      margin: 0 !important;
+      font-size: 0.72rem !important;
+      line-height: 1.4 !important;
+      letter-spacing: 0.02em !important;
+      text-align: center !important;
+    }
+
+    :global(.staff-grid.staff-grid--minimal .staff-card__role--minimal) {
+      margin: 0 !important;
+      font-size: 0.62rem !important;
+      line-height: 1.5 !important;
+      letter-spacing: 0.08em !important;
+      text-transform: uppercase !important;
+      text-align: center !important;
+      opacity: 0.68 !important;
+    }
+
+    :global(.staff-grid.staff-grid--minimal .staff-card__bio--minimal) {
+      margin: 0 !important;
+      font-size: 0.64rem !important;
+      line-height: 1.6 !important;
+      letter-spacing: 0.02em !important;
+      text-align: center !important;
+      opacity: 0.82 !important;
+    }
+
+    .staff-message--minimal {
+      padding-top: 2.2rem;
+      display: grid;
+      place-items: center;
+    }
+
+    .staff-message__inner {
+      width: min(560px, 100%);
+      display: grid;
+      gap: 0.7rem;
+      text-align: center;
+    }
+
+    .staff-message__label {
+      margin: 0;
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      opacity: 0.66;
+    }
+
+    .staff-message__title {
+      margin: 0;
+      font-size: 0.82rem;
+      line-height: 1.8;
+      font-weight: 300;
+      color: rgba(0, 0, 0, 0.72);
+    }
+
+    .staff-message__body {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .staff-message__body p {
+      margin: 0;
+      font-size: 0.7rem;
+      line-height: 1.9;
+      color: rgba(0, 0, 0, 0.72);
+    }
+  </style>
+</BaseLayout>
