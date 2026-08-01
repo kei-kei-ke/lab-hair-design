@@ -40,7 +40,6 @@ jobs:
         run: npm run build
 
       - name: Deploy dist via FTP
-        if: ${{ github.event_name != 'push' || (secrets.CONOHA_FTP_HOST != '' && secrets.CONOHA_FTP_USERNAME != '' && secrets.CONOHA_FTP_PASSWORD != '' && secrets.CONOHA_FTP_PORT != '' && secrets.CONOHA_FTP_REMOTE_DIR != '') }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.CONOHA_FTP_HOST }}
