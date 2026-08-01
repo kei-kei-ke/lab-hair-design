@@ -39,6 +39,13 @@ jobs:
       - name: Build static site
         run: npm run build
 
+      - name: Normalize FTP remote directory
+        shell: bash
+        run: |
+          remote_dir="${{ secrets.CONOHA_FTP_REMOTE_DIR }}"
+          remote_dir="${remote_dir%/}/"
+          echo "REMOTE_DIR=$remote_dir" >> "$GITHUB_ENV"
+
       - name: Deploy dist via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -48,5 +55,5 @@ jobs:
           protocol: ftps
           port: ${{ secrets.CONOHA_FTP_PORT }}
           local-dir: ./dist/
-          server-dir: ${{ secrets.CONOHA_FTP_REMOTE_DIR }}
+          server-dir: ${{ env.REMOTE_DIR }}
           dangerous-clean-slate: false
