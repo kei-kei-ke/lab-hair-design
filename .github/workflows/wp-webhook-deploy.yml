@@ -45,8 +45,15 @@ jobs:
           remote_dir="${{ secrets.CONOHA_FTP_REMOTE_DIR }}"
           remote_dir="${remote_dir%/}/"
           echo "REMOTE_DIR=$remote_dir" >> "$GITHUB_ENV"
+          echo "REMOTE_DIR_PUBLIC=/public_html/" >> "$GITHUB_ENV"
+          echo "REMOTE_DIR_ROOT=./" >> "$GITHUB_ENV"
 
-      - name: Deploy dist via FTP
+          echo "Configured target: $remote_dir"
+          echo "Fallback target: /public_html/"
+          echo "Root target: ./"
+
+      - name: Deploy dist via FTP (configured target)
+        continue-on-error: true
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.CONOHA_FTP_HOST }}
@@ -56,4 +63,30 @@ jobs:
           port: ${{ secrets.CONOHA_FTP_PORT }}
           local-dir: ./dist/
           server-dir: ${{ env.REMOTE_DIR }}
+          dangerous-clean-slate: false
+
+      - name: Deploy dist via FTP (public_html fallback)
+        continue-on-error: true
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.CONOHA_FTP_HOST }}
+          username: ${{ secrets.CONOHA_FTP_USERNAME }}
+          password: ${{ secrets.CONOHA_FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.CONOHA_FTP_PORT }}
+          local-dir: ./dist/
+          server-dir: ${{ env.REMOTE_DIR_PUBLIC }}
+          dangerous-clean-slate: false
+
+      - name: Deploy dist via FTP (root fallback)
+        continue-on-error: true
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.CONOHA_FTP_HOST }}
+          username: ${{ secrets.CONOHA_FTP_USERNAME }}
+          password: ${{ secrets.CONOHA_FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.CONOHA_FTP_PORT }}
+          local-dir: ./dist/
+          server-dir: ${{ env.REMOTE_DIR_ROOT }}
           dangerous-clean-slate: false
