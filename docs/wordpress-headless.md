@@ -1,6 +1,8 @@
 # WordPress Headless CMS 連携手順
 
-この Astro フロントは、WordPress をデータ管理元にして動かせるようにしてあります。
+この Astro 連携は、WordPress をデータ管理元として扱うための開発・プレビュー用構成です。
+
+本番公開は WordPress（SWELL）側で行い、Astro の静的デプロイは使用しません。
 
 ## 1. Astro 側の設定
 

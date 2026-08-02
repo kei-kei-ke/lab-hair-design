@@ -1,6 +1,10 @@
-# Astro + WordPress Deployment
+# Deployment Notes
 
-This project builds a static Astro site that reads content from WordPress REST endpoints exposed by the Lab Headless Bridge plugin.
+This repository is maintained for a WordPress (SWELL) production site.
+
+Astro is used only as a local preview/development aid for working with WordPress content through the Lab Headless Bridge plugin. It is not used as the production deployment target.
+
+Production delivery is handled by WordPress/SWELL directly. GitHub Actions and FTP-based Astro deployment workflows are not part of the production path.
 
 ## Required WordPress plugin settings
 
